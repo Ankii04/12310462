@@ -1,0 +1,42 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum EmailStatus {
+  SCHEDULED
+  PROCESSING
+  SENT
+  FAILED
+}
+
+model EmailBatch {
+  id          String           @id @default(cuid())
+  userEmail   String
+  subject     String
+  body        String
+  startTime   DateTime
+  delayMs     Int
+  hourlyLimit Int
+  createdAt   DateTime         @default(now())
+  emails      ScheduledEmail[]
+}
+
+model ScheduledEmail {
+  id           String      @id @default(cuid())
+  batchId      String
+  batch        EmailBatch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  recipient    String
+  senderEmail  String
+  status       EmailStatus @default(SCHEDULED)
+  scheduledFor DateTime
+  sentAt       DateTime?
+  error        String?
+  bullJobId    String?     @unique
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
